@@ -1,0 +1,24 @@
+class a {
+	void static  main() {
+		x: bool;
+		y:integer;
+		y:=1;
+		while y<3 do
+		{
+			x:integer;
+			x:=5;
+			{
+		 		y:=y+1;
+		 		io.writeIntLn(x);
+		 	}
+		 	while y==2 do
+		 	{
+		 		break;
+		 		io.writeIntLn(y+x);
+		 		y:=y+1;
+		 	}
+			#break;
+		}
+		io.writeIntLn(y);
+	}
+}

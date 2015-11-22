@@ -1,0 +1,7 @@
+class a {
+	void static  main() {
+		a:integer;
+		a:=1;
+		while a==2 do io.writeIntLn(a); 
+	}
+}

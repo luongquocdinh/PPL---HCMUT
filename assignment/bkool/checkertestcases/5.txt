@@ -1,0 +1,6 @@
+class abc {
+	a: integer;
+	void main() {
+		a := a ^ "asb";
+	}
+}

@@ -1,0 +1,8 @@
+class a {
+	void static  main() {
+		a:integer;
+		a:=1;
+		io.writeIntLn(a);
+		io.writeFloatLn(a);
+	}
+}

@@ -1,0 +1,9 @@
+class a {
+	a:integer;
+	final float b = 1.4;
+	void static  main() {
+		x:a;
+		self.x:=4;
+		io.writeFloatLn(self.x);
+	}
+}

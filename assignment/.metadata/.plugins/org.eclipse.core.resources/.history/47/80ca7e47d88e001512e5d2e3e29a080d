@@ -1,0 +1,8 @@
+class a {
+	void static  main() {
+		a:float;
+		x:bool;
+		a:=3;
+		io.writeBoolLn(a>=2);
+	}
+}

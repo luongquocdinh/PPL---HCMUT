@@ -1,0 +1,20 @@
+class a {
+	void static  main() {
+		a:float;
+		x:bool;
+		a:=3;
+		if (a==3) && (a>=3) then{
+			x:= true && !(1>2) && (a>=2)&& (a==3);
+			io.writeBoolLn(true && !(1>2) && (a>=2)&& (a==3) && x);
+			while a<10 do{
+				io.writeFloatLn(a);
+				if a<3 then break;
+				x:=false;
+				a:= a+1;
+				if a<5 then continue;
+				a:=a+1.5;
+			}
+			io.writeBoolLn(!x);
+		}
+	}
+}

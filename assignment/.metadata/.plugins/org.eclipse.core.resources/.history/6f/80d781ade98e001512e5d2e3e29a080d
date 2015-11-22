@@ -1,0 +1,7 @@
+class a {
+	void static  main() {
+		a:bool;
+		a:= "hai" == "hai";
+		io.writeBoolLn(a);
+	}
+}

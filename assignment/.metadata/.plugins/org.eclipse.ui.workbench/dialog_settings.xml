@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="FileSystemImportWizard">
+		<item value="false" key="WizardFileSystemResourceImportPage1.STORE_OVERWRITE_EXISTING_RESOURCES_ID"/>
+		<item value="false" key="WizardFileSystemResourceImportPage1.STORE_CREATE_CONTAINER_STRUCTURE_ID"/>
+		<list key="WizardFileSystemResourceImportPage1.STORE_SOURCE_NAMES_ID">
+			<item value="I:\Learning\Ki 5\PPL\Assignment\upload\bkool\testcases"/>
+			<item value="D:\Project\assignment 2\assignment2\src\bkool\checker"/>
+			<item value="I:\Learning\Ki 5\PPL"/>
+			<item value="I:\Learning\Ki 5\PPL\Assignment\New folder (3)\upload\bkool\src\bkool\parser"/>
+			<item value="I:\Learning\Ki 5\PPL\Assignment\checkertestcases"/>
+			<item value="I:\Learning\Ki 5\PPL\save ass\bkool-master\src\bkool\utils"/>
+			<item value="I:\Learning\Ki 5\PPL\save ass\bkool-master\src\bkool\parser"/>
+			<item value="I:\Learning\Ki 5\PPL\save ass\bkool-master\src\bkool\checker"/>
+			<item value="I:\Learning\Ki 5\PPL\save ass\bkool-master\src\bkool"/>
+			<item value="D:\Project\assignment 2\antlr4"/>
+			<item value="I:\Learning\Ki 5\PPL\Assignment\src\bkool"/>
+			<item value="I:\Learning\Ki 5\PPL\Assignment\src (1)\src\bkool"/>
+			<item value="I:\Learning\Ki 5\PPL\Assignment"/>
+			<item value="I:\Learning\Ki 5\PPL\Assignment\src\bkool\checker"/>
+			<item value="I:\Learning\Ki 5\PPL\Assignment\parse 3\utils"/>
+			<item value="I:\Learning\Ki 5\PPL\Assignment\parse 3\parser"/>
+			<item value="I:\Learning\Ki 5\PPL\Assignment\src (1)\src\bkool\parser"/>
+			<item value="I:\Learning\Ki 5\PPL\Assignment\grammar"/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.internal.QuickAccess">
+		<item value="-1" key="dialogWidth"/>
+		<item value="-1" key="dialogHeight"/>
+		<list key="orderedProviders">
+		</list>
+		<list key="textArray">
+		</list>
+		<list key="orderedElements">
+		</list>
+		<list key="textEntries">
+		</list>
+	</section>
+	<section name="WorkbenchPreferenceDialogSettings">
+		<item value="8" key="DIALOG_Y_ORIGIN"/>
+		<item value="374" key="DIALOG_X_ORIGIN"/>
+	</section>
+	<section name="NewWizardAction">
+		<item value="com.github.jknack.antlr4ide.ui.wizard.Antlr4NewProjectWizard" key="NewWizardSelectionPage.STORE_SELECTED_ID"/>
+		<list key="NewWizardSelectionPage.STORE_EXPANDED_CATEGORIES_ID">
+			<item value="org.eclipse.ui.Basic"/>
+			<item value="org.scala-ide.sdt.core.wizards"/>
+		</list>
+	</section>
+	<section name="org.eclipse.ui.preferences.keysPreferencePage">
+		<item value="true" key="uncategorizedFilter"/>
+		<item value="true" key="internalFilter"/>
+		<item value="true" key="actionSetFilter"/>
+	</section>
+	<section name="ImportExportAction">
+		<item value="org.eclipse.ui.wizards.import.FileSystem" key="ImportExportPage.STORE_SELECTED_IMPORT_WIZARD_ID"/>
+		<list key="ImportExportPage.STORE_EXPANDED_IMPORT_CATEGORIES">
+			<item value="org.eclipse.ui.Basic"/>
+		</list>
+	</section>
+</section>

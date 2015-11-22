@@ -1,0 +1,9 @@
+class a {
+	a:float;
+	a:=1;
+	void static  main() {
+		a:bool;
+		a:= "hai" == "hai";
+		io.writeBoolLn(5>1.2);
+	}
+}

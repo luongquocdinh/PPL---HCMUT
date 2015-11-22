@@ -1,0 +1,9 @@
+class a {
+	void static  main() {
+		a:float;
+		x:bool;
+		a:=3;
+		x:= true && !(1>2) && (a>=2) && (a==3);
+		io.writeBoolLn(x);
+	}
+}

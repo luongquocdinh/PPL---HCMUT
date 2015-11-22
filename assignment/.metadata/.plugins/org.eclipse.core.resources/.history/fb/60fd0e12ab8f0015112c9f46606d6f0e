@@ -1,0 +1,612 @@
+/**
+ *	@author Nguyen Hua Phung
+ *	@version 1.0
+ *	23/10/2015
+ * 	This file provides a simple version of code generator
+ *
+ */
+
+/**
+ * @Student: Luong Quoc Dinh
+ * @Id number: 51300526
+ **/
+package bkool.codegeneration
+
+
+
+import bkool._
+import bkool.parser._
+import bkool.checker._
+import bkool.utils._
+import java.io.{PrintWriter, File}
+import org.antlr.v4.runtime.ANTLRFileStream
+import org.antlr.v4.runtime.CommonTokenStream
+import org.antlr.v4.runtime.tree._
+import scala.collection.JavaConverters._
+
+case class MethodType(in:List[Type],out:Type) extends Type
+object TestCodeGenerator {
+  def init() = {
+    val mem = List( Member("readInt",Static,Method,MethodType(List(),IntType),None),
+                      Member("writeInt",Static,Method,MethodType(List(IntType),VoidType),None),
+                      Member("writeIntLn",Static,Method,MethodType(List(IntType),VoidType),None),
+                      Member("readFloat",Static,Method,MethodType(List(),FloatType),None),
+                      Member("writeFloat",Static,Method,MethodType(List(FloatType),VoidType),None),
+                      Member("writeFloatLn",Static,Method,MethodType(List(FloatType),VoidType),None),
+                      Member("readBool",Static,Method,MethodType(List(),BoolType),None),
+                      Member("writeBool",Static,Method,MethodType(List(BoolType),VoidType),None),
+                      Member("writeBoolLn",Static,Method,MethodType(List(BoolType),VoidType),None),
+                      Member("readStr",Static,Method,MethodType(List(),StringType),None),
+                      Member("writeStr",Static,Method,MethodType(List(StringType),VoidType),None),
+                      Member("writeStrLn",Static,Method,MethodType(List(StringType),VoidType),None)
+                    )
+    ClassData("io","",mem)
+  }
+	def check(infile:ANTLRFileStream,outfile:PrintWriter,dir:File) = {
+    val lexer = new BKOOLLexer(infile);
+    val tokens = new CommonTokenStream(lexer);
+    val parser = new BKOOLParser(tokens);
+    val progtree = parser.program()
+    
+    val astbuild = new ASTGeneration()
+    val ast = astbuild.visit(progtree).asInstanceOf[Program]
+    val global = new GlobalEnvironment
+    
+    val env = global.visit(ast, null).asInstanceOf[List[ClassData]]
+    
+    val gl = env :+ init()
+    
+    
+		val mem = List(Member("main",Static,Method,MethodType(List(),VoidType),None))
+    val cls = ClassData("a","",mem)
+    val ini = init()
+    
+		val gc = new CodeGenVisitor(ast,gl,dir)
+		gc.visit(ast, null);
+	}
+}
+
+case class Member(val name:String,val skind:SIKind,val kind:Kind,val mtype:Type,val value:Option[Val])
+case class ClassData(val cname:String,val pname:String,val mem:List[Member])
+trait Value
+case class IntValue(value:Int) extends Value
+case class FloatValue(value:Float) extends Value
+case class StringValue(value:String) extends Value
+case class BoolValue(value:Boolean) extends Value
+case class RawValue(value:Expr) extends Value
+
+case class ListMember(value:List[Member]) extends Context
+case class ListClass(value:List[ClassData]) extends Context
+
+
+case class SubContext(emit:Emitter,classname:String,decl:List[Decl]) extends Context
+case class SubBody(emit:Emitter,classname:String,frame:Frame,sym:List[(String,Type,Val)]) extends Context
+case class SymbolTable(sym:List[(String,Type,Val)],classname:String) extends Context
+case class Access(emit:Emitter,classname:String,frame:Frame,sym:List[(String,Type,Val)],isLeft:Boolean,isFirst:Boolean) extends Context
+  trait Val
+  case class Index(value:Int) extends Val
+  case class Const(value:Expr) extends Val
+class MVisitor extends Visitor {
+  def visitProgram(ast: Program, c: Context): Object = c
+  def visitVarDecl(ast: VarDecl, c: Context): Object  = c  // Done
+  def visitConstDecl(ast: ConstDecl, c: Context): Object  = c  // Done
+  def visitParamDecl(ast: ParamDecl, c: Context): Object  = c
+  def visitClassDecl(ast: ClassDecl, c: Context): Object  = c
+  def visitMethodDecl(ast: MethodDecl, c: Context): Object = c
+  def visitAttributeDecl(ast: AttributeDecl, c: Context): Object = c
+  def visitInstance(ast: Instance.type, c: Context): Object = c
+  def visitStatic(ast: Static.type, c: Context): Object = c
+  
+  override def visitIntType(ast:IntType.type,o:Context) = ast
+  override def visitFloatType(ast:FloatType.type,o:Context) = ast
+  override def visitStringType(ast:StringType.type,o:Context) = ast
+  override def visitBoolType(ast:BoolType.type,o:Context) = ast
+  override def visitVoidType(ast:VoidType.type,o:Context) = ast
+  override def visitArrayType(ast:ArrayType,o:Context) = ast
+  override def visitClassType(ast:ClassType,o:Context) = ast
+  
+  def visitBinaryOp(ast: BinaryOp, c: Context): Object = c  // Done
+  def visitUnaryOp(ast: UnaryOp, c: Context): Object = c  // Done
+  def visitNewExpr(ast: NewExpr, c: Context): Object = c
+  def visitCallExpr(ast: CallExpr, c: Context): Object = c
+  def visitId(ast: Id, c: Context): Object = c  // Done
+  def visitArrayCell(ast: ArrayCell, c: Context): Object = c
+  def visitFieldAccess(ast: FieldAccess, c: Context): Object = c
+  def visitBlock(ast: Block, c: Context): Object = c  // Done
+  def visitAssign(ast: Assign, c: Context): Object = c  // Done
+  def visitIf(ast: If, c: Context): Object = c  // Done
+  def visitCall(ast: Call, c: Context): Object = c
+  def visitWhile(ast: While, c: Context): Object = c  // Done
+  def visitBreak(ast: Break.type, c: Context): Object = c
+  def visitContinue(ast: Continue.type, c: Context): Object = c
+  def visitReturn(ast: Return, c: Context): Object = c
+  def visitIntLiteral(ast: IntLiteral, c: Context): Object = c
+  def visitFloatLiteral(ast: FloatLiteral, c: Context): Object = c
+  def visitStringLiteral(ast: StringLiteral, c: Context): Object = c
+  def visitBooleanLiteral(ast: BooleanLiteral, c: Context): Object = c
+  def visitNullLiteral(ast: NullLiteral.type, c: Context): Object = c
+  def visitSelfLiteral(ast: SelfLiteral.type, c: Context): Object = c
+}
+  // TODO: CodeGenVisitor
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//case class SymbolList(sl:List[(String, Type)]) extends Context
+class GlobalEnvironment extends MVisitor {
+
+  override def visitProgram(ast:Program, c:Context) = {
+    ast.decl.foldLeft(List[ClassData]())((x, y) => visit(y, ListClass(x)).asInstanceOf[List[ClassData]])
+  }
+  //////////// Class Declared               
+  override def visitClassDecl(ast:ClassDecl, c:Context) = {
+    val env = c.asInstanceOf[ListClass].value
+    val member = ast.decl.foldLeft(List[Member]())((x,y)=>visit(y,ListMember(x)).asInstanceOf[List[Member]])
+    ClassData(ast.name.name, ast.parent.name, member)::env
+  }
+  
+  //////////// Parameter
+   override def visitParamDecl(ast:ParamDecl, c:Context) = {
+    val env = c.asInstanceOf[ListMember].value
+    (ast.id.name, ast.paramType, Parameter, Variable, List[Type](), null) :: env 
+  }
+  
+  //////////// Attribute Declared
+   override def visitAttributeDecl(ast: AttributeDecl, c: Context) = {
+    val env = c.asInstanceOf[ListMember].value
+    if(ast.decl.isInstanceOf[ConstDecl]){
+      var con = ast.decl.asInstanceOf[ConstDecl]
+      Member(con.id.name,ast.kind,Attribute,con.constType, Option(Const(con.const)))::env 
+    }
+    else{
+      var vardc= ast.decl.asInstanceOf[VarDecl] 
+      Member(vardc.variable.name , ast.kind,Attribute,vardc.varType,None)::env
+    }
+  }
+   
+  ///////////// Method Declared
+    override def visitMethodDecl(ast: MethodDecl, c: Context) = {
+    val env = c.asInstanceOf[ListMember].value
+    val para = ast.param.foldLeft(List[Member]())((x,y)=> visit(y,ListMember(x)).asInstanceOf[List[Member]]).map(x=>x.mtype)
+    Member(ast.name.name , ast.kind , Method,MethodType(para,ast.returnType),None)::env
+   }
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class CodeGenVisitor(astTree:AST,env:List[ClassData],dir:File) extends MVisitor {
+	
+  def lookup[T](name:String,lst:List[T],func:T=>String):Option[T] = lst match {
+    case List() => None
+    case head::tail => if (name == func(head)) Some(head) else lookup(name,tail,func)
+  }
+  
+  override def visitProgram(ast:Program,c:Context) = ast.decl.map(visit(_,c))
+  
+  override def visitClassDecl(ast:ClassDecl,o:Context) = {
+      val path = dir.getPath()
+      val emit = new Emitter(path+"/"+ast.name.name+".j")
+      emit.printout(emit.emitPROLOG(ast.name.name, ast.parent.name))    
+      ast.decl.map(x => visit(x,SubContext(emit,ast.name.name,List())))  
+      genMETHOD(ast.name.name,
+            MethodDecl(Instance,ast.name,List(),null,Block(List(),List())),o,List(),new Frame(VoidType),emit)       
+      emit.emitEPILOG()
+      print(emit.buff)
+      println(env)
+      o   
+  }
+  
+ 
+
+    /** generate code for default constructor 
+   *  @param classname the name of the enclosing class
+   *  @param lst the list of instance attributes (array type or immutable) that need to initialize
+   *  @param frame the frame where the initialization happen 
+   *  @param v the visitor that visits the sub-node to generate code
+   */
+  def genMETHOD(classname:String,consdecl:MethodDecl,o:Context,lst:List[Decl],frame:Frame,emit:Emitter) = {
+    
+    val isInit = consdecl.returnType == null
+    val isMain = consdecl.kind == Static && consdecl.name.name == "main" && consdecl.param.length == 0 && consdecl.returnType == VoidType
+    val returnType = if (isInit) VoidType else consdecl.returnType
+    val methodName = if (isInit) "<init>" else consdecl.name.name
+    val param = if (isMain) List(ParamDecl(Id("args"), ArrayType(IntLiteral(0),StringType))) else consdecl.param
+    val mtype =  MethodType(param.map(_.paramType),returnType)
+    
+    emit.printout(emit.emitMETHOD(methodName, mtype, consdecl.kind==Static,frame));
+    frame.enterScope(true);
+    
+    // Generate code for parameter declarations
+    if (consdecl.kind == Instance) emit.printout(emit.emitVAR(frame.getNewIndex,"this",ClassType(classname),frame.getStartLabel,frame.getEndLabel,frame))
+    val env = param.foldLeft(List[(String,Type,Val)]())((y,x) => visit(x,SubBody(emit,classname,frame,y)).asInstanceOf[List[(String,Type,Val)]])
+    val body = consdecl.body.asInstanceOf[Block]
+    
+    //Generate code for local declarations
+    val newenv = body.decl.foldLeft(List[(String,Type,Val)]())((y,x) => visit(x,SubBody(emit,classname,frame,y)).asInstanceOf[List[(String,Type,Val)]])
+    emit.printout(emit.emitLABEL(frame.getStartLabel(),frame))
+    
+    //Generate code for statements
+    if (isInit) {
+      emit.printout(emit.emitREADVAR("this",ClassType(classname),0,frame))
+      emit.printout(emit.emitINVOKESPECIAL())
+    }
+    body.stmt.map(x=>visit(x,SubBody(emit,classname,frame,env++newenv)))
+    
+    emit.printout(emit.emitLABEL(frame.getEndLabel(),frame))
+    if (returnType == VoidType) emit.printout(emit.emitRETURN(VoidType,frame));
+    emit.printout(emit.emitENDMETHOD(frame));
+    frame.exitScope();
+    
+    
+  }
+  override def visitMethodDecl(ast:MethodDecl,o:Context) = {
+    val subctxt = o.asInstanceOf[SubContext]
+    val emit = subctxt.emit
+    val frame = new Frame(ast.returnType)
+    genMETHOD(subctxt.classname,ast,o,subctxt.decl,frame,emit)
+    o
+  }
+  
+  //////// Attribute
+  override def visitAttributeDecl(ast: AttributeDecl, c: Context) = {
+    val subctxt = c.asInstanceOf[SubContext]
+    val emit = subctxt.emit
+    val frame = new Frame(null)
+    c
+  }
+  
+  override def visitParamDecl(ast:ParamDecl,o:Context) = {
+    val ctxt = o.asInstanceOf[SubBody]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    val env = ctxt.sym
+    val idx = frame.getNewIndex
+    emit.printout(emit.emitVAR(idx,ast.id.name,ast.paramType,frame.getStartLabel(),frame.getEndLabel(),frame))
+    env :+ (ast.id.name,ast.paramType,Index(idx))
+  }
+  
+  override def visitVarDecl(ast: VarDecl, c: Context) = {
+    val ctxt = c.asInstanceOf[SubBody]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    val env = ctxt.sym
+    val idx = frame.getNewIndex
+    emit.printout(emit.emitVAR(idx, ast.variable.name, ast.varType, frame.getStartLabel(), frame.getEndLabel(), frame))
+    env :+ (ast.variable.name, ast.varType, Index(idx))
+  }
+  
+  override def visitConstDecl(ast: ConstDecl, c: Context) = {
+    val ctxt = c.asInstanceOf[SubBody]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    val env = ctxt.sym
+    emit.printout(emit.emitVAR(0, ast.const.toString(), ast.constType, frame.getStartLabel(), frame.getEndLabel(), frame))
+    env :+ (ast.id.name, ast.constType, Const(ast.const))
+  }
+
+  override def visitCall(ast:Call,o:Context) = {
+    val ctxt = o.asInstanceOf[SubBody]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    val nenv = ctxt.sym
+    val (str,typ) = visit(ast.parent,Access(emit,ctxt.classname,frame,nenv,false,true)).asInstanceOf[(String,Type)]
+    
+    val in = ast.params.foldLeft(("",List[Type]()))((y,x)=>
+      {
+        val (str1,typ1) = visit(x,Access(emit,ctxt.classname,frame,nenv,false,true)).asInstanceOf[(String,Type)]
+        if ((ast.method.name == "writeFloat" && typ1 != FloatType) || (ast.method.name == "writeFloatLn" && typ1 != FloatType)) {
+          (y._1 + str1 + emit.emitI2F(frame) , y._2 :+ FloatType)
+        } else (y._1 + str1,y._2 :+ typ1)
+      }
+    )
+    
+    emit.printout(in._1)
+    ast.params.map(x=>frame.pop)
+    emit.printout(emit.emitINVOKESTATIC(str+"/"+ast.method.name,MethodType(in._2,VoidType),frame))
+             
+    
+  }
+  
+  
+  
+  override def visitId(ast:Id,o:Context) = {
+    val ctxt = o.asInstanceOf[Access]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    val nenv = ctxt.sym
+    lookup(ast.name,env,(x:ClassData)=>x.cname) match {
+      case Some(c) => {
+         lookup(ast.name, nenv, (x:(String, Type, Val)) => x._1) match {
+           case Some(c) => {
+             if(c._3.isInstanceOf[Index] || c._3.isInstanceOf[Const]) {
+               if (ctxt.isLeft == true){
+                 if (ctxt.isFirst == true) (emit.emitWRITEVAR(ast.name, c._2, c._3.asInstanceOf[Index].value, frame), c._2)
+                 else {
+                   (ast.name, ClassType(ast.name))
+                 }
+               }
+               else{
+                 if (ctxt.isFirst == true){ 
+                   if (c._3.isInstanceOf[Index]) (emit.emitREADVAR(ast.name, c._2, c._3.asInstanceOf[Index].value, frame), c._2)
+                   else {
+                     (emit.emitREADCONST(c._3.asInstanceOf[Const].value, c._2, frame), c._2)
+                     }
+                   }
+                 else (ast.name, ClassType(ast.name))
+               }
+             }
+             else
+               (ast.name, ClassType(ast.name))
+           }
+           case None => (ast.name, ClassType(ast.name))
+         } 
+      } 
+      case None => {
+        lookup(ast.name, nenv, (x:(String, Type, Val)) => x._1) match {
+          case Some(c) => {
+            if (c._3.isInstanceOf[Index] || c._3.isInstanceOf[Const]) {
+              if (ctxt.isLeft == true){
+                 if (ctxt.isFirst == true) (emit.emitWRITEVAR(ast.name, c._2, c._3.asInstanceOf[Index].value, frame), c._2)
+                 else {
+                   (ast.name, ClassType(ast.name))
+                 }
+               }
+               else{
+                 if (ctxt.isFirst == true){ 
+                   if (c._3.isInstanceOf[Index]) (emit.emitREADVAR(ast.name, c._2, c._3.asInstanceOf[Index].value, frame), c._2)
+                   else {
+                     println("here const")
+                     (emit.emitREADCONST(c._3.asInstanceOf[Const].value, c._2, frame), c._2)   
+                     }
+                   }
+                 else (ast.name, ClassType(ast.name))
+               }
+            }
+            else 
+              (ast.name, ClassType(ast.name))
+          }
+          case None => throw Undeclared(Identifier,ast.name)
+        }
+      }
+    }  
+  }
+  
+  override def visitAssign(ast: Assign, c: Context) = {
+    val ctxt = c.asInstanceOf[SubBody]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    val nenv = ctxt.sym
+    val right = visit(ast.expr, Access(emit, ctxt.classname,frame, nenv, false, true)).asInstanceOf[(String, Type)]
+    val left = visit(ast.leftHandSide, Access(emit, ctxt.classname,frame, nenv, true, true)).asInstanceOf[(String, Type)]
+    if (right._2 == IntType && left._2 == FloatType) {
+      emit.printout(right._1 + emit.emitI2F(frame))
+    } else emit.printout(right._1)
+    emit.printout(left._1)
+  }
+ 
+  override def visitIntLiteral(ast:IntLiteral,o:Context) = {
+    val ctxt = o.asInstanceOf[Access]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    (emit.emitPUSHICONST(ast.value, frame),IntType)
+  }
+  
+  override def visitFloatLiteral(ast:FloatLiteral, o:Context) = {
+    val ctxt = o.asInstanceOf[Access]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    (emit.emitPUSHFCONST(ast.value.toString(), frame), FloatType)
+  }
+  
+   override def visitStringLiteral(ast:StringLiteral,o:Context) = {
+    val ctxt = o.asInstanceOf[Access]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    val str = ast.value.toString()
+    val string = (emit.emitPUSHCONST(str, StringType, frame), StringType)
+    string
+  }
+   
+   override def visitBooleanLiteral(ast: BooleanLiteral, c: Context) = {
+     val ctxt = c.asInstanceOf[Access]
+     val emit = ctxt.emit
+     val frame = ctxt.frame
+     val bool = ast.value.toString()
+     val boolean = (emit.emitPUSHICONST(bool, frame), BoolType)
+     boolean
+   }
+  
+  override def visitUnaryOp(ast: UnaryOp, c: Context) = {
+    val ctxt = c.asInstanceOf[Access]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    val body = visit(ast.body, c).asInstanceOf[(String, Type)]
+    ast.op.toString() match{
+      case "+" => body
+      case "-" =>(body._1+emit.emitNEGOP(body._2, frame),body._2)
+      case "!" => (body._1+emit.emitNOT(body._2, frame), body._2)
+    }
+  }
+  
+  override def visitBinaryOp(ast: BinaryOp, c: Context) = {
+    val ctxt = c.asInstanceOf[Access]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    var left = visit(ast.left, c).asInstanceOf[(String, Type)]
+    var left1 = left._1
+    var right = visit(ast.right, c).asInstanceOf[(String, Type)]
+    var right1 = right._1
+    val op = ast.op.toString()
+    val typeop = if (left._2 == FloatType || right._2 == FloatType || op == "/") {
+                    if (left._2 == IntType) left1 = left._1 + emit.emitI2F(frame)
+                    if (right._2 == IntType) right1 = right._1 + emit.emitI2F(frame)
+                    FloatType
+                  } else left._2         
+    
+    op match {
+      case "+" => {
+        (left1 + right1 + emit.emitADDOP(op, typeop, frame), typeop)  
+      }
+      
+      case "-" => {
+        (left1 + right1 + emit.emitADDOP(op, typeop, frame), typeop)
+      }
+      
+      case "*" => {
+        (left1 + right1 + emit.emitMULOP(op, typeop, frame), typeop)
+      }
+      
+      case "\\" => {
+        (left1 + right1 + emit.emitMULOP(op, typeop, frame), typeop)
+      }
+      
+      case "/" => {
+        (left1 + right1 + emit.emitMULOP(op, typeop, frame), typeop)
+      }
+      
+      case "%" => {
+        (left1 + right1 + emit.emitMOD(frame), typeop)
+      }
+      
+      case "^" => {
+        println(left1)
+        println(left1.substring(6, left1.length() - 2))
+        println(right1.substring(6, right1.length() - 2))
+        var left_str = left1.substring(6, left1.length() - 2)
+        var right_str = right1.substring(6, right1.length() - 2)
+        val str = (emit.emitConcat("\""+left_str+right_str+"\"", frame), StringType)
+        println(str)
+        str
+      }
+      
+      case "&&" => {
+        (left1 + right1 + emit.emitANDOP(frame), BoolType)
+      }
+      
+      case "||" => {
+        (left1 + right1 + emit.emitOROP(frame), BoolType)
+      }
+      
+      case ">" | ">=" | "<" | "<=" | "<>" | "==" => {
+        (left1 + right1 + emit.emitREOP(op, typeop, frame), BoolType)
+      }
+    }
+  }
+  
+  override def visitBlock(ast: Block, c: Context) = {
+    val ctxt = c.asInstanceOf[SubBody]
+    val emit = ctxt.emit
+    val env = ctxt.sym
+    val frame = ctxt.frame
+    
+    frame.enterScope(false)
+      
+    val nenv = ast.decl.foldLeft(List[(String,Type,Val)]())((y,x) => visit(x,SubBody(emit,ctxt.classname,frame,y)).asInstanceOf[List[(String, Type, Val)]])
+    emit.printout(emit.emitLABEL(frame.getStartLabel(), frame))
+    ast.stmt.map(x => visit(x,SubBody(emit,ctxt.classname,frame,nenv++env)))
+    emit.printout(emit.emitLABEL(frame.getEndLabel(), frame))
+    
+    frame.exitScope()
+    c
+  }
+  
+  override def visitWhile(ast: While, c: Context) = {
+    val ctxt = c.asInstanceOf[SubBody]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    val env = ctxt.sym
+    
+    frame.enterLoop
+    val break = frame.getBreakLabel()
+    val continue = frame.getContinueLabel()
+    
+    emit.printout(emit.emitLABEL(continue, frame))
+    emit.printout(ast.expr.accept(this, Access(emit, ctxt.classname, frame, env, false, true)).asInstanceOf[(String, Type)]._1)
+    emit.printout(emit.emitIFFALSE(frame.getBreakLabel(), frame))
+    ast.loop.accept(this, ctxt)
+    emit.printout(emit.emitGOTO(continue, frame))
+    emit.printout(emit.emitLABEL(break, frame))
+    
+    frame.exitLoop()
+    c
+  }
+  
+  override def visitIf(ast: If, c: Context) = {
+    val ctxt = c.asInstanceOf[SubBody]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    val env = ctxt.sym
+    
+    emit.printout(ast.expr.accept(this, Access(emit, ctxt.classname, frame, env, false, true)).asInstanceOf[(String, Type)]._1)
+    val label1 = frame.getNewLabel()
+    val label2 = frame.getNewLabel()
+    emit.printout(emit.emitIFFALSE(label1, frame))
+    ast.thenStmt.accept(this, ctxt)
+    emit.printout(emit.emitGOTO(label2, frame))
+    emit.printout(emit.emitLABEL(label1, frame))
+    ast.elseStmt.map(x => visit(x, SubBody(emit, ctxt.classname, frame, env)))
+    emit.printout(emit.emitLABEL(label2, frame))
+  }
+  
+  override def visitContinue(ast: Continue.type, c: Context) = {
+     val ctxt = c.asInstanceOf[SubBody]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    emit.printout(emit.emitGOTO(frame.getContinueLabel(), frame))
+  }
+  
+  override def visitBreak(ast: Break.type, c: Context)={
+    val ctxt = c.asInstanceOf[SubBody]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    emit.printout(emit.emitGOTO(frame.getBreakLabel(), frame))
+  }
+  
+  override def visitFieldAccess(ast: FieldAccess, c: Context) = {
+    val ctxt = c.asInstanceOf[Access]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    val isLeft = ctxt.isLeft
+    val left = visit(ast.name, Access(emit, ctxt.classname, frame, ctxt.sym, true, false)).asInstanceOf[(String, Type)]
+    val reclass = left._2.asInstanceOf[ClassType].classType
+    val field = env.filter(x => x.cname == reclass)(0).mem
+    lookup(ast.field.name, field, (x:Member) => x.name) match {
+      case Some(c) => {
+        if (ctxt.isLeft == true) {
+          (emit.emitPUTSTATIC(reclass+"."+c.name, c.mtype, frame), c.mtype)
+        }
+        else {
+          c.value match {
+            case Some(a) => (emit.emitPUSHFCONST(emit.emitExpr(a.asInstanceOf[Const].value, c.mtype), frame), c.mtype)
+            case None => (emit.emitGETSTATIC(reclass+"."+c.name, c.mtype, frame), c.mtype)
+          }
+        }
+      }
+      
+      case None => None
+    }
+  }
+  
+//  override def visitNullLiteral(ast: NullLiteral.type, c: Context) {
+//    val ctxt = c.asInstanceOf[Access]
+//    val emit = ctxt.emit
+//    val frame = ctxt.frame
+//    emit.printout(emit.getConst(NullLiteral)._1)
+//  }
+  
+  override def visitSelfLiteral(ast: SelfLiteral.type, c: Context) = {
+    val ctxt = c.asInstanceOf[Access]
+    val emit = ctxt.emit
+    val frame = ctxt.frame
+    lookup(ast.)
+    emit.printout(emit.emitALOAD(0, frame))
+  }
+  
+}
+
+
+
+
+

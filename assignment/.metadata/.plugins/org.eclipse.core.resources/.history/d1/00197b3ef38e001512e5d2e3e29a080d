@@ -1,0 +1,11 @@
+class a {
+	a:integer;
+	final float b = 1.4;
+	#a:=1;
+	#io.writeIntLn(a);
+	void static  main() {
+		a:bool;
+		a:= "hai" == "hai";
+		io.writeBoolLn(5>1.2);
+	}
+}

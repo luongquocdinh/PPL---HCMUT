@@ -1,0 +1,6 @@
+class A {
+	b:float;
+	b:integer;
+	method(a:integer) {
+	}
+}

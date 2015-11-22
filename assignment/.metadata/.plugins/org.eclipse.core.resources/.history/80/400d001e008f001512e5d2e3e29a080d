@@ -1,0 +1,7 @@
+class a {
+	a:integer;
+	final float b = 1.4;
+	void static  main() {
+		
+	}
+}

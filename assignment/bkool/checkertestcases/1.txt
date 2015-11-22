@@ -1,0 +1,6 @@
+class abc {
+	void main() {
+		a:integer;
+		a:=self.main();
+	}
+}
